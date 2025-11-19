@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: deploy <project url>"
+    exit 1
+fi
+
+ORG="$(echo "$1" | awk -F'/' '{print $4}')"
+PROJECT="$(echo "$1" | awk -F'/' '{print $5}')"
+
+state checkout ${ORG}/${PROJECT} --portable --force --runtime-path "/workdir/${PROJECT}"
+
+exit 0
