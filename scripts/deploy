@@ -1,17 +1,39 @@
 #!/bin/bash
 set -e
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: deploy <project url>"
+IS_PORTABLE=""
+PORTABLE_FLAGS=""
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --portable)
+            PORTABLE_FLAGS="--portable --force --runtime-path"
+            IS_PORTABLE=true
+            shift
+            ;;
+        *)
+            PROJECT_URL="$1"
+            shift
+            ;;
+    esac
+done
+
+if [ -z "$PROJECT_URL" ]; then
+    echo "Usage: deploy <project url> [--portable]"
     exit 1
 fi
 
-ACTIVESTATE_API_HOST="$(echo "$1" | awk -F'/' '{print $3}')"
-ORG="$(echo "$1" | awk -F'/' '{print $4}')"
-PROJECT="$(echo "$1" | awk -F'/' '{print $5}')"
+ACTIVESTATE_API_HOST="$(echo "$PROJECT_URL" | awk -F'/' '{print $3}')"
+ORG="$(echo "$PROJECT_URL" | awk -F'/' '{print $4}')"
+PROJECT="$(echo "$PROJECT_URL" | awk -F'/' '{print $5}')"
 
 export ACTIVESTATE_API_HOST
 state auth
-state checkout ${ORG}/${PROJECT} --portable --force --runtime-path "/workdir/${PROJECT}"
+
+if [ "$IS_PORTABLE" = true ]; then
+    state checkout ${ORG}/${PROJECT} ${PORTABLE_FLAGS} /workdir/${PROJECT}
+else
+    state activate ${ORG}/${PROJECT}
+fi
 
 exit 0
